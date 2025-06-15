@@ -1,8 +1,8 @@
-
 #[cfg(feature = "google_cloud")]
 pub mod google_cloud {
     use google_cloud_storage::client::{Client, ClientConfig};
     use google_cloud_storage::client::google_cloud_auth::credentials::CredentialsFile;
+    use google_cloud_storage::http::buckets::Bucket;
     use google_cloud_storage::http::buckets::delete::{DeleteBucketParam, DeleteBucketRequest};
     use google_cloud_storage::http::buckets::insert::{BucketCreationConfig, InsertBucketRequest};
     use google_cloud_storage::http::buckets::list::ListBucketsRequest;
@@ -16,7 +16,7 @@ pub mod google_cloud {
     use google_cloud_storage::http::objects::Object;
     use google_cloud_storage::http::objects::upload::{Media, UploadObjectRequest, UploadType};
     use google_cloud_storage::sign::{SignedURLError, SignedURLMethod, SignedURLOptions};
-    use crate::{ClientError, ClientInterface, ClientObject, EmptyReqRes, ReqRes};
+    use crate::{ClientBucket, ClientError, ClientInterface, ClientObject, EmptyReqRes, ReqRes};
     
     pub enum GoogleCloudError {
         HttpError(Error),
@@ -110,6 +110,26 @@ pub mod google_cloud {
         }
     }
 
+    pub struct GoogleCloudBucket {
+        bucket: Bucket
+    }
+
+    impl ClientBucket for GoogleCloudBucket {
+        async fn id(&self) -> String {
+            self.bucket.id.clone()
+        }
+
+        async fn name(&self) -> String {
+            self.bucket.name.clone()
+        }
+    }
+
+    impl From<Bucket> for GoogleCloudBucket {
+        fn from(value: Bucket) -> Self {
+            GoogleCloudBucket {bucket: value}
+        }
+    }
+
     pub struct GoogleCloud {
         client: Client
     }
@@ -131,7 +151,7 @@ pub mod google_cloud {
             Ok(self.client.download_object(&req, &Range(starting, ending)).await?)
         }
 
-        async fn static_upload_object(&mut self, bucket: String, object: String, data: Vec<u8>) -> ReqRes<GoogleCloudObject> {
+        async fn static_upload_object(&self, bucket: String, object: String, data: Vec<u8>) -> ReqRes<GoogleCloudObject> {
             let upload_type = UploadType::Simple(Media::new(object));
             let req = UploadObjectRequest {
                 bucket,
@@ -140,7 +160,7 @@ pub mod google_cloud {
             Ok(self.client.upload_object(&req, data, &upload_type).await?.into())
         }
 
-        async fn url_upload_object(&mut self, bucket: String, object: String) -> ReqRes<String> {
+        async fn url_upload_object(&self, bucket: String, object: String) -> ReqRes<String> {
             Ok(self.client.signed_url(bucket.as_str(), object.as_str(), None, None, SignedURLOptions { method: SignedURLMethod::PUT, ..Default::default() }).await?)
         }
 
@@ -165,14 +185,13 @@ pub mod google_cloud {
             Ok(self.client.delete_object(&req).await?)
         }
 
-        async fn create_bucket(&self, bucket: String) -> EmptyReqRes {
+        async fn create_bucket(&self, bucket: String) -> ReqRes<GoogleCloudBucket> {
             let req = InsertBucketRequest {
                 name: bucket,
                 param: Default::default(),
                 bucket: BucketCreationConfig::default()
             };
-            self.client.insert_bucket(&req).await?;
-            todo!()
+            Ok(self.client.insert_bucket(&req).await?.into())
         }
 
         async fn copy_object(&self, src_bucket: String, src_object: String, dest_bucket: String, dest_object: String) -> ReqRes<GoogleCloudObject> {
@@ -186,14 +205,13 @@ pub mod google_cloud {
             Ok(GoogleCloudObject::from(self.client.copy_object(&req).await?))
         }
 
-        async fn list_buckets(&self, project: String, max_results: Option<u32>) -> ReqRes<Vec<String>> {
+        async fn list_buckets(&self, project: String, max_results: Option<u32>) -> ReqRes<Vec<GoogleCloudBucket>> {
             let req = ListBucketsRequest {
                 project,
                 max_results: max_results.and_then(|t| { Some(t as i32) }),
                 ..Default::default()
             };
-            self.client.list_buckets(&req).await?.items;
-            todo!("Add return stuff")
+            Ok(self.client.list_buckets(&req).await?.items.into_iter().map(|x| {x.into()}).collect())
         }
 
         async fn list_objects(&self, bucket: String, max_results: Option<u32>) -> ReqRes<Vec<GoogleCloudObject>> {
