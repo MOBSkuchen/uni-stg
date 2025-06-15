@@ -1,7 +1,11 @@
-use crate::google_cloud::google_cloud::GoogleCloudError;
-
+#[cfg(feature = "google_cloud")]
+use crate::google_cloud::GoogleCloudError;
+#[cfg(feature = "google_cloud")]
 mod google_cloud;
 
+// TODO: Find a better way for async traits
+
+#[allow(async_fn_in_trait)]
 pub trait ClientInterface {
     async fn static_download_object(&self, bucket: String, object_id: String, starting: Option<u64>, ending: Option<u64>) -> ReqRes<Vec<u8>>;
     async fn static_upload_object(&self, bucket: String, object_id: String, data: Vec<u8>) -> ReqRes<impl ClientObject>;
@@ -15,6 +19,7 @@ pub trait ClientInterface {
     async fn list_objects(&self, bucket: String, max_results: Option<u32>) -> ReqRes<Vec<impl ClientObject>>;
 }
 
+#[allow(async_fn_in_trait)]
 pub trait ClientObject {
     async fn size(&self) -> u64;
     async fn bucket(&self) -> String;
@@ -23,6 +28,7 @@ pub trait ClientObject {
     async fn content_type(&self) -> Option<String>;
 }
 
+#[allow(async_fn_in_trait)]
 pub trait ClientBucket {
     async fn id(&self) -> String;
     async fn name(&self) -> String;
