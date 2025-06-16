@@ -51,27 +51,27 @@ pub struct GoogleCloudConfig {
 }
 
 impl GoogleCloudConfig {
-    pub fn anonymous() -> Self {
+    pub fn anonymous(project_id: String) -> Self {
         Self {
-            config: ClientConfig::default().anonymous()
+            config: (ClientConfig { project_id: Some(project_id), ..Default::default()}).anonymous()
         }
     }
 
-    pub async fn standard_auth() -> Self {
+    pub async fn standard_auth(project_id: String) -> Self {
         Self {
-            config: ClientConfig::default().with_auth().await.unwrap()
+            config: (ClientConfig { project_id: Some(project_id), ..Default::default()}).with_auth().await.unwrap()
         }
     }
 
-    pub async fn from_file(path: String) -> Self {
+    pub async fn from_file(project_id: String, path: String) -> Self {
         Self {
-            config: ClientConfig::default().with_credentials(CredentialsFile::new_from_file(path).await.unwrap()).await.unwrap()
+            config: (ClientConfig { project_id: Some(project_id), ..Default::default()}).with_credentials(CredentialsFile::new_from_file(path).await.unwrap()).await.unwrap()
         }
     }
 
-    pub async fn from_str(s: &str) -> Self {
+    pub async fn from_str(project_id: String, s: &str) -> Self {
         Self {
-            config: ClientConfig::default().with_credentials(CredentialsFile::new_from_str(&*s).await.unwrap()).await.unwrap()
+            config: (ClientConfig { project_id: Some(project_id), ..Default::default()}).with_credentials(CredentialsFile::new_from_str(s).await.unwrap()).await.unwrap()
         }
     }
 }
@@ -129,13 +129,15 @@ impl From<Bucket> for GoogleCloudBucket {
 }
 
 pub struct GoogleCloud {
-    client: Client
+    client: Client,
+    project_id: String
 }
 
 impl GoogleCloud {
     pub fn new(config: GoogleCloudConfig) -> Self {
+        let project_id = config.config.project_id.clone().unwrap();
         let client = Client::new(config.config);
-        Self { client }
+        Self { client, project_id }
     }
 }
 
@@ -203,10 +205,10 @@ impl ClientInterface for GoogleCloud {
         Ok(GoogleCloudObject::from(self.client.copy_object(&req).await?))
     }
 
-    async fn list_buckets(&self, project: String, max_results: Option<u32>) -> ReqRes<Vec<GoogleCloudBucket>> {
+    async fn list_buckets(&self, max_results: Option<u32>) -> ReqRes<Vec<GoogleCloudBucket>> {
         let req = ListBucketsRequest {
-            project,
-            max_results: max_results.and_then(|t| { Some(t as i32) }),
+            project: self.project_id.clone(),
+            max_results: max_results.map(|t| t as i32),
             ..Default::default()
         };
         Ok(self.client.list_buckets(&req).await?.items.into_iter().map(|x| {x.into()}).collect())
@@ -215,7 +217,7 @@ impl ClientInterface for GoogleCloud {
     async fn list_objects(&self, bucket: String, max_results: Option<u32>) -> ReqRes<Vec<GoogleCloudObject>> {
         let req = ListObjectsRequest {
             bucket,
-            max_results: max_results.and_then(|t| { Some(t as i32) }),
+            max_results: max_results.map(|t| t as i32),
             ..Default::default()
         };
         Ok(self.client.list_objects(&req).await?.items.unwrap().into_iter().map(|x| {x.into()}).collect())

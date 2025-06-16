@@ -15,8 +15,8 @@ pub trait ClientInterface {
     async fn remove_object(&self, bucket: String, object_id: String) -> EmptyReqRes;
     async fn create_bucket(&self, bucket: String) -> ReqRes<impl ClientBucket>;
     async fn copy_object(&self, src_bucket: String, src_object: String, dest_bucket: String, dest_object: String) -> ReqRes<impl ClientObject>;
-    async fn list_buckets(&self, project: String, max_results: Option<u32>) -> ReqRes<Vec<impl ClientBucket>>;
-    async fn list_objects(&self, bucket: String, max_results: Option<u32>) -> ReqRes<Vec<impl ClientObject>>;
+    async fn list_buckets(&self, max_results: Option<u32>) -> ReqRes<Vec<impl ClientBucket>>;
+    async fn list_objects(&self, bucket_name: String, max_results: Option<u32>) -> ReqRes<Vec<impl ClientObject>>;
 }
 
 #[allow(async_fn_in_trait)]
