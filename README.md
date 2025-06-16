@@ -9,6 +9,8 @@ It is recommended to store the path to the file name in an environment variable 
 ## Platforms
 - [ ] Local
 - [x] Google Cloud Storage
-- [ ] SFTP & FTP
+- [ ] SFTP
+- [ ] FTP
+- [ ] Azure Blob storage
 - [x] AWS S3
 - [ ] Cloudflare R2
