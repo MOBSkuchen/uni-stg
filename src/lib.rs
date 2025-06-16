@@ -1,11 +1,14 @@
 #[cfg(feature = "aws_s3")]
 use crate::aws_s3::AWSError;
+#[cfg(feature = "aws_s3")]
+mod aws_s3;
+
 #[cfg(feature = "google_cloud")]
 use crate::google_cloud::GoogleCloudError;
 #[cfg(feature = "google_cloud")]
 mod google_cloud;
-#[cfg(feature = "aws_s3")]
-mod aws_s3;
+
+
 // TODO: Find a better way for async traits
 
 #[allow(async_fn_in_trait)]
@@ -37,12 +40,13 @@ pub trait ClientObject {
 pub trait ClientBucket {
     fn id(&self) -> String;
     fn name(&self) -> String;
+    fn location(&self) -> Option<String>;
 }
 
 pub enum ClientError {
     #[cfg(feature = "google_cloud")]
     GoogleCloudClient(GoogleCloudError),
-    #[cfg(feature = "google_cloud")]
+    #[cfg(feature = "aws_s3")]
     AWSClient(AWSError)
 }
 

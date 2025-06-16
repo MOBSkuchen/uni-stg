@@ -64,6 +64,10 @@ impl ClientBucket for AWSBucket {
     fn name(&self) -> String {
         self.bucket_name.clone()
     }
+
+    fn location(&self) -> Option<String> {
+        self.location.clone()
+    }
 }
 
 impl From<Bucket> for AWSBucket {

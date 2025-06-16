@@ -121,6 +121,10 @@ impl ClientBucket for GoogleCloudBucket {
     fn name(&self) -> String {
         self.bucket.name.clone()
     }
+
+    fn location(&self) -> Option<String> {
+        Some(self.bucket.location.clone())
+    }
 }
 
 impl From<Bucket> for GoogleCloudBucket {
