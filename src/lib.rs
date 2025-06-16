@@ -3,7 +3,7 @@ use crate::google_cloud::{GoogleCloudBucket, GoogleCloudObject};
 use crate::google_cloud::GoogleCloudError;
 #[cfg(feature = "google_cloud")]
 mod google_cloud;
-
+mod aws_s3;
 // TODO: Find a better way for async traits
 
 #[allow(async_fn_in_trait)]
