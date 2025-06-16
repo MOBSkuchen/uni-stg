@@ -1,8 +1,10 @@
-use crate::google_cloud::{GoogleCloudBucket, GoogleCloudObject};
+#[cfg(feature = "aws_s3")]
+use crate::aws_s3::AWSError;
 #[cfg(feature = "google_cloud")]
 use crate::google_cloud::GoogleCloudError;
 #[cfg(feature = "google_cloud")]
 mod google_cloud;
+#[cfg(feature = "aws_s3")]
 mod aws_s3;
 // TODO: Find a better way for async traits
 
@@ -39,7 +41,9 @@ pub trait ClientBucket {
 
 pub enum ClientError {
     #[cfg(feature = "google_cloud")]
-    GoogleCloudClient(GoogleCloudError)
+    GoogleCloudClient(GoogleCloudError),
+    #[cfg(feature = "google_cloud")]
+    AWSClient(AWSError)
 }
 
 pub type ReqRes<T> = Result<T, ClientError>;
