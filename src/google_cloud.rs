@@ -2,6 +2,7 @@ use google_cloud_storage::client::{Client, ClientConfig};
 use google_cloud_storage::client::google_cloud_auth::credentials::CredentialsFile;
 use google_cloud_storage::http::buckets::Bucket;
 use google_cloud_storage::http::buckets::delete::{DeleteBucketParam, DeleteBucketRequest};
+use google_cloud_storage::http::buckets::get::GetBucketRequest;
 use google_cloud_storage::http::buckets::insert::{BucketCreationConfig, InsertBucketRequest};
 use google_cloud_storage::http::buckets::list::ListBucketsRequest;
 use google_cloud_storage::http::Error;
@@ -81,23 +82,23 @@ pub struct GoogleCloudObject {
 }
 
 impl ClientObject for GoogleCloudObject {
-    async fn size(&self) -> u64 {
+    fn size(&self) -> u64 {
         self.object.size as u64
     }
 
-    async fn bucket(&self) -> String {
+    fn bucket_name(&self) -> String {
         self.object.bucket.clone()
     }
 
-    async fn id(&self) -> String {
+    fn id(&self) -> String {
         self.object.id.clone()
     }
 
-    async fn name(&self) -> String {
+    fn name(&self) -> String {
         self.object.name.clone()
     }
 
-    async fn content_type(&self) -> Option<String> {
+    fn content_type(&self) -> Option<String> {
         self.object.content_type.clone()
     }
 }
@@ -113,11 +114,11 @@ pub struct GoogleCloudBucket {
 }
 
 impl ClientBucket for GoogleCloudBucket {
-    async fn id(&self) -> String {
+    fn id(&self) -> String {
         self.bucket.id.clone()
     }
 
-    async fn name(&self) -> String {
+    fn name(&self) -> String {
         self.bucket.name.clone()
     }
 }
@@ -212,6 +213,23 @@ impl ClientInterface for GoogleCloud {
             ..Default::default()
         };
         Ok(self.client.list_buckets(&req).await?.items.into_iter().map(|x| {x.into()}).collect())
+    }
+
+    async fn get_bucket(&self, bucket_name: String) -> ReqRes<GoogleCloudBucket> {
+        let req = GetBucketRequest {
+            bucket: bucket_name,
+            ..Default::default()
+        };
+        Ok(self.client.get_bucket(&req).await?.into())
+    }
+
+    async fn get_object(&self, bucket_name: String, object_name: String) -> ReqRes<GoogleCloudObject> {
+        let req = GetObjectRequest {
+            bucket: bucket_name,
+            object: object_name,
+            ..Default::default()
+        };
+        Ok(self.client.get_object(&req).await?.into())
     }
 
     async fn list_objects(&self, bucket: String, max_results: Option<u32>) -> ReqRes<Vec<GoogleCloudObject>> {
