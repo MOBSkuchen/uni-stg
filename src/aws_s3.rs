@@ -7,6 +7,7 @@ use aws_sdk_s3::operation::delete_bucket::{DeleteBucketError};
 use aws_sdk_s3::operation::delete_object::DeleteObjectError;
 use aws_sdk_s3::operation::get_bucket_location::GetBucketLocationError;
 use aws_sdk_s3::operation::get_object::{GetObjectError, GetObjectOutput};
+use aws_sdk_s3::operation::list_buckets::ListBucketsError;
 use aws_sdk_s3::operation::put_object::{PutObjectError, PutObjectOutput};
 use aws_sdk_s3::types::Bucket;
 use crate::{ClientBucket, ClientError, ClientInterface, ClientObject, EmptyReqRes, ReqRes};
@@ -47,7 +48,8 @@ aws_error_enum_and_impls!(
         CopObjErr => CopyObjectError,
         GetLocErr => GetBucketLocationError,
         CreObjErr => CreateBucketError,
-        PutObjErr => PutObjectError
+        PutObjErr => PutObjectError,
+        LstBucErr => ListBucketsError,
     }
 );
 
@@ -144,8 +146,6 @@ impl ClientObject for AWSObject {
 }
 
 impl ClientInterface for AWSClient {
-
-    /// Downloads an object
     async fn static_download_object(&self, bucket_name: String, object_name: String, starting: Option<u64>, ending: Option<u64>) -> ReqRes<Vec<u8>> {
         let range = match (starting, ending) {
             (Some(s), Some(e)) => Some(format!("bytes={}-{}", s, e)),
@@ -169,10 +169,12 @@ impl ClientInterface for AWSClient {
     }
 
     /// AWS S3 provides no URL for uploading objects. An empty string is returned.
-    async fn url_upload_object(&self, bucket: String, object_id: String) -> ReqRes<String> {
+    async fn url_upload_object(&self, _: String, _: String) -> ReqRes<String> {
         Ok("".to_string())
     }
 
+    /// Creates a download URL
+    /// Note: I don't know if this is correct
     async fn url_download_object(&self, bucket_name: String, object_name: String) -> ReqRes<String> {
         Ok(format!("https://{bucket_name}.s3.amazonaws.com/{object_name}"))
     }

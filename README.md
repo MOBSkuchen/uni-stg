@@ -10,5 +10,5 @@ It is recommended to store the path to the file name in an environment variable 
 - [ ] Local
 - [x] Google Cloud Storage
 - [ ] SFTP & FTP
-- [ ] AWS S3
+- [x] AWS S3
 - [ ] Cloudflare R2
